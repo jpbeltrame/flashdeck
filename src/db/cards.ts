@@ -34,6 +34,9 @@ export async function createTextCard(input: TextCardInput): Promise<CardWithNote
     await db.notes.add(note)
     await db.cards.add(card)
   })
+  // Reclaim any media attached in the editor that never made it onto a saved note
+  // (e.g. an earlier cancelled edit). The new note's own refs are safe.
+  await pruneOrphanMedia()
   return { card, note }
 }
 

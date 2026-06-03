@@ -8,11 +8,17 @@ function MediaSegment({ id }: { id: string }) {
   const [url, setUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!asset) return
+    // useLiveQuery returns a fresh object on every re-query, so key the effect on
+    // the stable id to avoid re-creating the URL (and flickering) on unrelated changes.
+    if (!asset) {
+      setUrl(null)
+      return
+    }
     const objectUrl = URL.createObjectURL(asset.blob)
     setUrl(objectUrl)
     return () => URL.revokeObjectURL(objectUrl)
-  }, [asset])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asset?.id])
 
   if (!asset || !url) return null
 
