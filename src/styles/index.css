@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: .dark on <html> activates dark utilities */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* "Focus Mono" design tokens */
+@theme {
+  --color-accent: #4f6bed;
+  --color-accent-fg: #ffffff;
+
+  --color-bg: #ffffff;
+  --color-surface: #f7f9fc;
+  --color-border: #e7eaf0;
+  --color-text: #1c2433;
+  --color-muted: #9aa3b5;
+}
+
+.dark {
+  --color-bg: #0f141c;
+  --color-surface: #161d28;
+  --color-border: #273141;
+  --color-text: #e7ecf3;
+  --color-muted: #7a869a;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
