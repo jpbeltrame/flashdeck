@@ -7,6 +7,7 @@ import Button from '../ui/Button'
 import Card from '../ui/Card'
 import EmptyState from '../ui/EmptyState'
 import CardEditor from '../ui/CardEditor'
+import RenderedField from '../ui/RenderedField'
 
 export default function DeckDetailPage() {
   const { id = '' } = useParams()
@@ -63,9 +64,9 @@ export default function DeckDetailPage() {
             </Card>
           ) : (
             <Card key={card.id} className="flex items-start gap-3">
-              <div className="flex-1">
-                <div className="font-medium">{note.fields.Front}</div>
-                <div className="text-sm text-[var(--color-muted)]">{note.fields.Back}</div>
+              <div className="flex-1 space-y-1">
+                <div className="font-medium"><RenderedField text={note.fields.Front} /></div>
+                <div className="text-sm text-[var(--color-muted)]"><RenderedField text={note.fields.Back} /></div>
               </div>
               <Button variant="ghost" onClick={() => setEditingId(note.id)}>Edit</Button>
               <Button variant="danger" onClick={() => deleteCard(card.id)}>Delete</Button>

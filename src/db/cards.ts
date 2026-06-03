@@ -1,6 +1,8 @@
 import { db } from './db'
 import type { Card, Note } from './schema'
 import { newCardSrs } from '../domain/srs'
+import { mediaIdsIn } from '../domain/media'
+import { pruneOrphanMedia } from './media'
 
 export interface TextCardInput {
   deckId: string
@@ -19,7 +21,7 @@ export async function createTextCard(input: TextCardInput): Promise<CardWithNote
     deckId: input.deckId,
     type: 'basic',
     fields: { Front: input.front, Back: input.back },
-    mediaRefs: [],
+    mediaRefs: mediaIdsIn(input.front, input.back),
   }
   const card: Card = {
     id: crypto.randomUUID(),
@@ -32,6 +34,9 @@ export async function createTextCard(input: TextCardInput): Promise<CardWithNote
     await db.notes.add(note)
     await db.cards.add(card)
   })
+  // Reclaim any media attached in the editor that never made it onto a saved note
+  // (e.g. an earlier cancelled edit). The new note's own refs are safe.
+  await pruneOrphanMedia()
   return { card, note }
 }
 
@@ -47,7 +52,11 @@ export async function listCardsByDeck(deckId: string): Promise<CardWithNote[]> {
 }
 
 export async function updateTextCard(noteId: string, front: string, back: string): Promise<void> {
-  await db.notes.update(noteId, { fields: { Front: front, Back: back } })
+  await db.notes.update(noteId, {
+    fields: { Front: front, Back: back },
+    mediaRefs: mediaIdsIn(front, back),
+  })
+  await pruneOrphanMedia()
 }
 
 export async function deleteCard(cardId: string): Promise<void> {
@@ -58,6 +67,7 @@ export async function deleteCard(cardId: string): Promise<void> {
     const remaining = await db.cards.where('noteId').equals(card.noteId).count()
     if (remaining === 0) await db.notes.delete(card.noteId)
   })
+  await pruneOrphanMedia()
 }
 
 export function countCardsByDeck(deckId: string): Promise<number> {

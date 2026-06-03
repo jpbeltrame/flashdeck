@@ -1,11 +1,18 @@
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { db } from '../db/db'
 import { createTextCard } from '../db/cards'
+import { addMedia } from '../db/media'
+import { mediaToken } from '../domain/media'
 import StudyPage from './StudyPage'
+
+beforeAll(() => {
+  globalThis.URL.createObjectURL = () => 'blob:mock'
+  globalThis.URL.revokeObjectURL = () => {}
+})
 
 beforeEach(async () => {
   await db.delete()
@@ -39,5 +46,12 @@ describe('StudyPage', () => {
   it('shows the all-caught-up state when nothing is due', async () => {
     renderStudy()
     expect(await screen.findByText(/nothing due/i)).toBeInTheDocument()
+  })
+
+  it('renders an image on the front of a media card', async () => {
+    const asset = await addMedia(new Blob(['x'], { type: 'image/png' }), 'p.png', 'image/png')
+    await createTextCard({ deckId: 'd1', front: mediaToken(asset.id), back: 'Paris' })
+    renderStudy()
+    expect(await screen.findByRole('img')).toHaveAttribute('src', 'blob:mock')
   })
 })
