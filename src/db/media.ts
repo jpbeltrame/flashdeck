@@ -1,8 +1,8 @@
 import { db } from './db'
 import type { MediaAsset } from './schema'
 
-export async function addMedia(blob: Blob, filename: string, mime: string): Promise<MediaAsset> {
-  const asset: MediaAsset = { id: crypto.randomUUID(), blob, mime, filename }
+export async function addMedia(blob: Blob, filename: string, mime: string, id?: string): Promise<MediaAsset> {
+  const asset: MediaAsset = { id: id ?? crypto.randomUUID(), blob, mime, filename }
   await db.media.add(asset)
   return asset
 }
