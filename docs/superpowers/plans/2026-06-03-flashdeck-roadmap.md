@@ -7,8 +7,8 @@ gets its own detailed implementation plan (written when the phase begins).
 
 | # | Phase | Plan file | Status |
 |---|---|---|---|
-| 1 | Foundation (scaffold, design system, dark mode, DB schema, routing, PWA, CI, docs) | `2026-06-03-flashdeck-phase1-foundation.md` | Plan written |
-| 2 | Decks & text cards (CRUD + study screen + SM-2 + basic progress) | _to be written_ | Pending |
+| 1 | Foundation (scaffold, design system, dark mode, DB schema, routing, PWA, CI, docs) | `2026-06-03-flashdeck-phase1-foundation.md` | ✅ Implemented |
+| 2 | Decks & text cards (CRUD + study screen + SM-2 + basic progress) | `2026-06-03-flashdeck-phase2-decks-and-study.md` | Plan written |
 | 3 | Media cards (image/audio/video via IndexedDB blobs) | _to be written_ | Pending |
 | 4 | Anki import (`.apkg`: Basic + Cloze + media + history) | _to be written_ | Pending |
 | 5 | Export (`.apkg`, JSON backup, `.ics`) | _to be written_ | Pending |
