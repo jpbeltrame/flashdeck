@@ -7,6 +7,7 @@ import type { Card } from '../db/schema'
 import type { Rating } from '../domain/srs'
 import Button from '../ui/Button'
 import EmptyState from '../ui/EmptyState'
+import RenderedField from '../ui/RenderedField'
 
 const RATINGS: { label: string; rating: Rating; variant: 'ghost' | 'primary' }[] = [
   { label: 'Again', rating: 1, variant: 'ghost' },
@@ -69,12 +70,12 @@ export default function StudyPage() {
       </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center min-h-40 flex items-center justify-center">
-        <div>
-          <div className="text-lg">{note?.fields.Front}</div>
-          {revealed && (
+        <div className="text-lg">
+          {note && <RenderedField text={note.fields.Front} />}
+          {revealed && note && (
             <>
               <hr className="my-4 border-[var(--color-border)]" />
-              <div className="text-lg text-[var(--color-muted)]">{note?.fields.Back}</div>
+              <div className="text-[var(--color-muted)]"><RenderedField text={note.fields.Back} /></div>
             </>
           )}
         </div>
