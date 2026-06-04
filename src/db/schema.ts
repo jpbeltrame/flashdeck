@@ -11,6 +11,8 @@ export interface Note {
   id: string
   deckId: string
   type: 'basic' | 'cloze'
+  /** Render mode for fields. Absent or 'text' = plain text (own-created cards); 'html' = sanitized HTML (Anki imports). */
+  format?: 'text' | 'html'
   fields: Record<string, string>
   mediaRefs: string[]
 }
