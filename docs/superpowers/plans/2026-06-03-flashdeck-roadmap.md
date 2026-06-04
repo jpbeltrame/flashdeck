@@ -19,6 +19,8 @@ gets its own detailed implementation plan (written when the phase begins).
 (a working app shell → CRUD/study → media → import → export → scheduling → polish).
 Writing one bite-sized plan per phase keeps each plan executable and reviewable.
 
-**Deferred:** Nested deck hierarchy on import — Anki `::` subdecks currently
+**Deferred:** Nested deck hierarchy on import — Anki `::`/`\x1f` subdecks currently
 import as flat decks keeping the full name verbatim. Rebuilding parent/child
 `Deck.parentId` nesting (and the UI to show it) is deferred to a later phase.
+Modern Anki schema (v18+, incl. zstd `collection.anki21b`) note types and decks
+ARE read (see `2026-06-04-flashdeck-modern-anki-schema.md`).
