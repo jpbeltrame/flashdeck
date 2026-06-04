@@ -59,3 +59,26 @@ export function readStringField(bytes: Uint8Array, field: number): string | unde
   }
   return undefined
 }
+
+/**
+ * Return the raw bytes of every length-delimited (wire type 2) occurrence of a
+ * field — used for `repeated` fields, including repeated sub-messages (each
+ * returned slice can be parsed again with these readers).
+ */
+export function readLengthDelimitedFields(bytes: Uint8Array, field: number): Uint8Array[] {
+  const c: Cursor = { bytes, pos: 0 }
+  const out: Uint8Array[] = []
+  while (c.pos < bytes.length) {
+    const tag = readVarint(c)
+    const fieldNum = Math.floor(tag / 8)
+    const wireType = tag & 7
+    if (fieldNum === field && wireType === 2) {
+      const len = readVarint(c)
+      out.push(bytes.subarray(c.pos, c.pos + len))
+      c.pos += len
+    } else {
+      skipField(c, wireType)
+    }
+  }
+  return out
+}
