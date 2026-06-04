@@ -9,6 +9,17 @@ const models = {
 const decks = { '1': { id: 1, name: 'Default' }, '2': { id: 2, name: 'Spanish::Verbs' } }
 
 describe('readCollection', () => {
+  it('throws a clear error when col.models is empty but notes are present (modern Anki schema)', async () => {
+    const db = await buildCollection({
+      crt: 1_600_000_000,
+      models: {},
+      decks: {},
+      notes: [{ id: 10, mid: '1', flds: 'Q\x1fA' }],
+      cards: [],
+    })
+    expect(() => readCollection(db)).toThrow(/newer Anki version/i)
+  })
+
   it('reads col (crt, models, decks), notes, cards, and revlog', async () => {
     const db = await buildCollection({
       crt: 1_600_000_000, models, decks,

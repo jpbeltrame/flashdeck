@@ -18,12 +18,31 @@ function rows(db: Database, sql: string): Record<string, unknown>[] {
   return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
 }
 
+function parseJsonMap(value: unknown): Record<string, unknown> {
+  if (value === null || value === undefined || value === '') return {}
+  const s = String(value).trim()
+  if (s === '' || s === 'null') return {}
+  return JSON.parse(s) as Record<string, unknown>
+}
+
 export function readCollection(db: Database): ParsedCollection {
   const col = rows(db, 'SELECT crt, models, decks FROM col LIMIT 1')[0]
+  const models = parseJsonMap(col.models) as Record<string, AnkiModel>
+  const decks = parseJsonMap(col.decks) as Record<string, AnkiDeck>
+
+  if (Object.keys(models).length === 0) {
+    const noteCount = rows(db, 'SELECT count(*) as cnt FROM notes')[0]
+    if (Number(noteCount?.cnt) > 0) {
+      throw new Error(
+        'This .apkg was exported by a newer Anki version using a format FlashDeck cannot read yet. In Anki, re-export the deck with "Support older Anki versions" checked.',
+      )
+    }
+  }
+
   return {
     crt: Number(col.crt),
-    models: JSON.parse(String(col.models)) as Record<string, AnkiModel>,
-    decks: JSON.parse(String(col.decks)) as Record<string, AnkiDeck>,
+    models,
+    decks,
     notes: rows(db, 'SELECT id, mid, flds FROM notes').map((r) => ({
       id: Number(r.id), mid: String(r.mid), flds: String(r.flds),
     })),

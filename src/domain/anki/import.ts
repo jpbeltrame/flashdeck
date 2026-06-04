@@ -1,7 +1,7 @@
 import type { Card, Deck, MediaAsset, Note, ReviewLog } from '../../db/schema'
 import { mediaIdsIn } from '../media'
 import type { ParsedCollection } from './collection'
-import { renderCard, rewriteMedia, splitFields } from './fields'
+import { renderCard, rewriteMedia, splitFields, type RenderedCard } from './fields'
 import { mapCardSrs, mapRevlog } from './srs-map'
 import type { ImportResult, MediaFile } from './types'
 
@@ -70,6 +70,7 @@ export function buildImportResult(col: ParsedCollection, mediaFiles: MediaFile[]
     }
 
     const noteId = crypto.randomUUID()
+    let display: RenderedCard | undefined
 
     for (const c of noteCards) {
       const deckId = deckIdByAnki.get(String(c.did))
@@ -81,14 +82,14 @@ export function buildImportResult(col: ParsedCollection, mediaFiles: MediaFile[]
       })
       const rc = renderCard(model, fields, c.ord, idByFilename)
       for (const w of rc.warnings) if (!warnings.includes(w)) warnings.push(w)
+      if (c === noteCards[0]) display = rc
     }
 
     // Store rendered Front/Back from the note's first card for editor/list display.
-    const display = renderCard(model, fields, noteCards[0].ord, idByFilename)
-    const fieldText = `${display.front}\n${display.back}`
+    const fieldText = `${display!.front}\n${display!.back}`
     notes.push({
       id: noteId, deckId: firstDeck, type: model.type === 1 ? 'cloze' : 'basic', format: 'html',
-      fields: { Front: display.front, Back: display.back },
+      fields: { Front: display!.front, Back: display!.back },
       mediaRefs: mediaIdsIn(fieldText),
     })
   }
