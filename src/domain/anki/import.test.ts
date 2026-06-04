@@ -69,6 +69,13 @@ describe('buildImportResult', () => {
     expect(r.media[0].filename).toBe('cat.jpg')
   })
 
+  it('carries the note-type css onto imported notes', () => {
+    const col = collection()
+    col.models['1'].css = '.card { font-size: 20px; }'
+    const r = buildImportResult(col, media)
+    expect(r.notes.find((n) => n.type === 'basic')!.css).toBe('.card { font-size: 20px; }')
+  })
+
   it('drops cards whose deck is missing and warns', () => {
     const c = collection({ cards: [{ id: 200, nid: 10, did: 999, ord: 0, type: 0, queue: 0, due: 0, ivl: 0, factor: 0, reps: 0, lapses: 0 }] })
     const r = buildImportResult(c, media)
