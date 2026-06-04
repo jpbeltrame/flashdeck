@@ -71,11 +71,11 @@ export default function StudyPage() {
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center min-h-40 flex items-center justify-center">
         <div className="text-lg">
-          {note && <RenderedField text={note.fields.Front} />}
+          {note && <RenderedField text={note.fields.Front} format={note.format} />}
           {revealed && note && (
             <>
               <hr className="my-4 border-[var(--color-border)]" />
-              <div className="text-[var(--color-muted)]"><RenderedField text={note.fields.Back} /></div>
+              <div className="text-[var(--color-muted)]"><RenderedField text={note.fields.Back} format={note.format} /></div>
             </>
           )}
         </div>
