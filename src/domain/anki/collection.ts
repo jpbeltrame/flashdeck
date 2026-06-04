@@ -45,7 +45,11 @@ function readModernModels(db: Database): Record<string, AnkiModel> {
         qfmt: readStringField(t.config as Uint8Array, 1) ?? '',
         afmt: readStringField(t.config as Uint8Array, 2) ?? '',
       }))
-    out[id] = { id, name: String(nt.name), type: kind === 1 ? 1 : 0, flds, tmpls }
+    out[id] = {
+      id, name: String(nt.name), type: kind === 1 ? 1 : 0,
+      css: readStringField(nt.config as Uint8Array, 3),
+      flds, tmpls,
+    }
   }
   return out
 }

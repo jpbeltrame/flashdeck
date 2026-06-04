@@ -13,6 +13,8 @@ export interface Note {
   type: 'basic' | 'cloze'
   /** Render mode for fields. Absent or 'text' = plain text (own-created cards); 'html' = sanitized HTML (Anki imports). */
   format?: 'text' | 'html'
+  /** Note-type stylesheet (imported Anki notes); applied when rendering in the card iframe. */
+  css?: string
   fields: Record<string, string>
   mediaRefs: string[]
 }

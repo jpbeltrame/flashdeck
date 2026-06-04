@@ -13,6 +13,7 @@ export interface AnkiModel {
   id: string
   name: string
   type: 0 | 1
+  css?: string
   flds: { name: string; ord: number }[]
   tmpls: AnkiTemplate[]
 }
