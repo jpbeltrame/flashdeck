@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import DOMPurify from 'dompurify'
 import { getMedia } from '../db/media'
-import { parseField, mediaKind } from '../domain/media'
+import { db } from '../db/db'
+import { parseField, mediaKind, mediaIdsIn } from '../domain/media'
 
 function MediaSegment({ id }: { id: string }) {
   const asset = useLiveQuery(() => getMedia(id), [id])
@@ -34,7 +36,7 @@ function MediaSegment({ id }: { id: string }) {
   }
 }
 
-export default function RenderedField({ text }: { text: string }) {
+function TextField({ text }: { text: string }) {
   const segments = parseField(text)
   return (
     <div className="space-y-2">
@@ -49,4 +51,45 @@ export default function RenderedField({ text }: { text: string }) {
       )}
     </div>
   )
+}
+
+function HtmlField({ text }: { text: string }) {
+  const ids = mediaIdsIn(text)
+  const assets = useLiveQuery(() => db.media.bulkGet(ids), [text])
+  const [html, setHtml] = useState('')
+
+  useEffect(() => {
+    if (assets === undefined) return
+    // Sanitize FIRST while [[media:id]] tokens are still present (they pass
+    // DOMPurify's URI filter), THEN swap tokens for app-generated object URLs —
+    // doing it the other way round makes DOMPurify strip the blob: src.
+    let resolved = DOMPurify.sanitize(text, { ADD_ATTR: ['controls'] })
+    const urls: string[] = []
+    ids.forEach((id, i) => {
+      const asset = assets[i]
+      if (!asset) return
+      const url = URL.createObjectURL(asset.blob)
+      urls.push(url)
+      const token = `[[media:${id}]]`
+      if (mediaKind(asset.mime) === 'audio') {
+        // Standalone token (from [sound:]) → an audio element.
+        resolved = resolved.split(token).join(`<audio controls src="${url}"></audio>`)
+      } else {
+        resolved = resolved.split(token).join(url) // token sits inside an <img src="...">
+      }
+    })
+    setHtml(resolved)
+    return () => urls.forEach((u) => URL.revokeObjectURL(u))
+  }, [assets, text])
+
+  return <div className="anki-field space-y-2" dangerouslySetInnerHTML={{ __html: html }} />
+}
+
+export interface RenderedFieldProps {
+  text: string
+  format?: 'text' | 'html'
+}
+
+export default function RenderedField({ text, format = 'text' }: RenderedFieldProps) {
+  return format === 'html' ? <HtmlField text={text} /> : <TextField text={text} />
 }
