@@ -54,6 +54,12 @@ export async function buildCollection(opts: FixtureOptions): Promise<Database> {
   return db
 }
 
+/** Open existing collection bytes with sql.js in Node (mirrors the app loader). */
+export async function openFromBytes(bytes: Uint8Array): Promise<Database> {
+  const SQL = await initSqlJs({ wasmBinary: readFileSync(wasmPath) })
+  return new SQL.Database(bytes)
+}
+
 /** Zip a built collection (+ optional media) into .apkg bytes. */
 export function zipApkg(db: Database, media: { filename: string; bytes: Uint8Array }[] = []): Uint8Array {
   const entries: Record<string, Uint8Array> = { 'collection.anki2': db.export() }
