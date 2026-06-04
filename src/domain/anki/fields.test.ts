@@ -39,8 +39,33 @@ describe('renderCard', () => {
   it('renders a Basic card front/back via the template', () => {
     const { front, back, warnings } = renderCard(basic, { Front: 'Q', Back: 'A' }, 0, map)
     expect(front).toBe('Q')
-    expect(back).toBe('Q<hr>A')
+    // {{FrontSide}} is dropped, not expanded — the study screen already shows the
+    // front, so the answer must not repeat it.
+    expect(back).toBe('<hr>A')
     expect(warnings).toEqual([])
+  })
+
+  it('drops conditional sections whose field is empty and keeps non-empty ones', () => {
+    const mc: AnkiModel = {
+      id: '3', name: 'MC', type: 0,
+      flds: [{ name: 'Q', ord: 0 }, { name: 'Opt1', ord: 1 }, { name: 'Opt2', ord: 2 }],
+      tmpls: [{
+        name: 'Card 1', ord: 0,
+        qfmt: '{{Q}}{{#Opt1}}<li>{{Opt1}}</li>{{/Opt1}}{{#Opt2}}<li>{{Opt2}}</li>{{/Opt2}}',
+        afmt: '{{Back}}',
+      }],
+    }
+    const { front } = renderCard(mc, { Q: 'Question', Opt1: 'A', Opt2: '' }, 0, map)
+    expect(front).toBe('Question<li>A</li>') // empty Opt2 section removed entirely
+  })
+
+  it('keeps an inverted ^ section only when the field is empty', () => {
+    const m: AnkiModel = {
+      ...basic,
+      tmpls: [{ name: 'x', ord: 0, qfmt: '{{Front}}{{^Back}}(no answer){{/Back}}', afmt: '{{Back}}' }],
+    }
+    expect(renderCard(m, { Front: 'Q', Back: '' }, 0, map).front).toBe('Q(no answer)')
+    expect(renderCard(m, { Front: 'Q', Back: 'A' }, 0, map).front).toBe('Q')
   })
   it('renders a Cloze card for the given ordinal', () => {
     const { front, back } = renderCard(cloze, { Text: 'The {{c1::sky}} is {{c2::blue}}' }, 0, map)

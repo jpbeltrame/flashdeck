@@ -27,9 +27,24 @@ export function rewriteMedia(html: string, idByFilename: Map<string, string>): s
   return out
 }
 
-function stripSections(template: string): string {
-  // Best-effort: drop Anki conditional markers, keep their inner content.
-  return template.replace(/\{\{[#^/][^}]*\}\}/g, '')
+// Evaluate Anki/Mustache conditional sections:
+//   {{#Field}}…{{/Field}}  keeps the inner content only when Field is non-empty
+//   {{^Field}}…{{/Field}}  keeps it only when Field IS empty
+// Applied repeatedly so nested sections resolve. Without this, optional slots
+// (e.g. unused multiple-choice options) would render as empty stray markup.
+function evalSections(template: string, fields: Record<string, string>): string {
+  const section = /\{\{([#^])([^}]+)\}\}([\s\S]*?)\{\{\/\2\}\}/
+  let out = template
+  let prev: string
+  do {
+    prev = out
+    out = out.replace(section, (_m, kind: string, name: string, inner: string) => {
+      const nonEmpty = (fields[name.trim()] ?? '').trim() !== ''
+      const keep = kind === '#' ? nonEmpty : !nonEmpty
+      return keep ? inner : ''
+    })
+  } while (out !== prev)
+  return out
 }
 
 export interface RenderedCard {
@@ -59,7 +74,8 @@ export function renderCard(
   }
 
   const substitute = (template: string, side: 'front' | 'back'): string => {
-    let out = stripSections(template ?? '')
+    // Resolve conditional sections first so empty optional fields drop their markup.
+    let out = evalSections(template ?? '', fields)
     // {{cloze:Field}} → cloze-rendered field
     out = out.replace(/\{\{cloze:([^}]+)\}\}/g, (_m, name: string) =>
       renderCloze(fields[name.trim()] ?? '', ord, side))
@@ -70,6 +86,8 @@ export function renderCard(
   }
 
   const front = substitute(tmpl?.qfmt ?? '', 'front')
-  const back = substitute(tmpl?.afmt ?? '', 'back').replace(/\{\{FrontSide\}\}/g, front)
+  // Drop {{FrontSide}} rather than expanding it — the study screen renders the
+  // front separately, so expanding here would duplicate the whole question.
+  const back = substitute(tmpl?.afmt ?? '', 'back').replace(/\{\{FrontSide\}\}/g, '')
   return { front, back, warnings }
 }
