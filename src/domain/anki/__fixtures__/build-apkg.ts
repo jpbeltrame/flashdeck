@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { zstdCompressSync } from 'node:zlib'
 import initSqlJs, { type Database } from 'sql.js'
 import { zipSync, strToU8 } from 'fflate'
 
@@ -60,12 +61,36 @@ export async function openFromBytes(bytes: Uint8Array): Promise<Database> {
   return new SQL.Database(bytes)
 }
 
-/** Zip a built collection (+ optional media) into .apkg bytes. */
+/** Zip a built collection (+ optional media) into legacy .apkg bytes (JSON media map). */
 export function zipApkg(db: Database, media: { filename: string; bytes: Uint8Array }[] = []): Uint8Array {
   const entries: Record<string, Uint8Array> = { 'collection.anki2': db.export() }
   const map: Record<string, string> = {}
   media.forEach((m, i) => { map[String(i)] = m.filename; entries[String(i)] = m.bytes })
   entries['media'] = strToU8(JSON.stringify(map))
+  return zipSync(entries)
+}
+
+/** Encode a `MediaEntries` protobuf (repeated MediaEntry entries=1; MediaEntry.name=1). */
+export function encodeMediaEntries(names: string[]): Uint8Array {
+  const out: number[] = []
+  for (const name of names) {
+    const sub = encodeProto([{ num: 1, value: name }]) // MediaEntry { name = 1 }
+    out.push((1 << 3) | 2, ...encodeVarint(sub.length), ...sub) // entries = 1, wire 2
+  }
+  return new Uint8Array(out)
+}
+
+/**
+ * Zip a built collection into modern v3 .apkg bytes: zstd `collection.anki21b`,
+ * a zstd-compressed `MediaEntries` protobuf as the media manifest, and
+ * uncompressed numbered media files.
+ */
+export function zipModernApkg(db: Database, media: { filename: string; bytes: Uint8Array }[] = []): Uint8Array {
+  const entries: Record<string, Uint8Array> = {
+    'collection.anki21b': new Uint8Array(zstdCompressSync(db.export())),
+  }
+  media.forEach((m, i) => { entries[String(i)] = m.bytes })
+  entries['media'] = new Uint8Array(zstdCompressSync(encodeMediaEntries(media.map((m) => m.filename))))
   return zipSync(entries)
 }
 

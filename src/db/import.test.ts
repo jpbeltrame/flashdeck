@@ -5,7 +5,7 @@ import { importApkg, persistImport } from './import'
 import { buildImportResult } from '../domain/anki/import'
 import { readCollection } from '../domain/anki/collection'
 import { unzipApkg } from '../domain/anki/unzip'
-import { buildCollection, buildModernCollection, zipApkg, openFromBytes } from '../domain/anki/__fixtures__/build-apkg'
+import { buildCollection, buildModernCollection, zipApkg, zipModernApkg, openFromBytes } from '../domain/anki/__fixtures__/build-apkg'
 
 beforeEach(async () => {
   await db.delete()
@@ -78,6 +78,36 @@ describe('importApkg (modern schema v18, end-to-end)', () => {
     const cloze = (await db.notes.toArray()).find((n) => n.type === 'cloze')!
     expect(cloze.format).toBe('html')
     expect(cloze.fields.Front).toContain('cloze')
+  })
+})
+
+describe('importApkg (modern v3 package with media)', () => {
+  it('imports a zstd .apkg whose media manifest is a protobuf, resolving image refs', async () => {
+    const cdb = await buildModernCollection({
+      crt: 1_600_000_000,
+      notetypes: [
+        { id: 1, name: 'Basic', fields: ['Front', 'Back'],
+          templates: [{ name: 'Card 1', qfmt: '{{Front}}', afmt: '{{Back}}' }] },
+      ],
+      decks: [{ id: 1, name: 'Default' }],
+      notes: [{ id: 10, mid: 1, flds: 'Look <img src="cat.jpg">\x1fA cat' }],
+      cards: [{ id: 100, nid: 10, did: 1, ord: 0, type: 0 }],
+    })
+    const file = new File(
+      [zipModernApkg(cdb, [{ filename: 'cat.jpg', bytes: new Uint8Array([1, 2, 3]) }])],
+      'modern.apkg',
+    )
+
+    const summary = await importApkg(file, { openDb: openFromBytes })
+    expect(summary.notes).toBe(1)
+    expect(summary.media).toBe(1)
+
+    const asset = (await db.media.toArray())[0]
+    expect(asset.filename).toBe('cat.jpg')
+    expect(asset.mime).toBe('image/jpeg')
+    const note = (await db.notes.toArray())[0]
+    expect(note.fields.Front).toContain('[[media:')
+    expect(note.mediaRefs).toContain(asset.id)
   })
 })
 
