@@ -1,9 +1,9 @@
-import type { Card, Deck, MediaAsset, Note, ReviewLog } from '../../db/schema'
+import type { Card, Deck, Note, ReviewLog } from '../../db/schema'
 import { mediaIdsIn } from '../media'
 import type { ParsedCollection } from './collection'
 import { renderCard, rewriteMedia, splitFields, type RenderedCard } from './fields'
 import { mapCardSrs, mapRevlog } from './srs-map'
-import type { ImportResult, MediaFile } from './types'
+import type { ImportResult } from './types'
 
 const MIME_BY_EXT: Record<string, string> = {
   jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml',
@@ -11,23 +11,23 @@ const MIME_BY_EXT: Record<string, string> = {
   mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
 }
 
-function mimeFor(filename: string): string {
+export function mimeFor(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase() ?? ''
   return MIME_BY_EXT[ext] ?? 'application/octet-stream'
 }
 
-export function buildImportResult(col: ParsedCollection, mediaFiles: MediaFile[], now: number = Date.now()): ImportResult {
+/**
+ * Build everything to persist except the media blobs. Media is keyed by
+ * `idByFilename` (filename→id) so the actual bytes can be streamed into storage
+ * separately, one file at a time, instead of being held in memory here.
+ */
+export function buildImportResult(col: ParsedCollection, filenames: string[], now: number = Date.now()): ImportResult {
   const warnings: string[] = []
 
-  // 1. Media assets + filename→id map for ref rewriting.
-  const media: MediaAsset[] = []
+  // 1. filename→id map, used both for rewriting note refs and (later) for
+  //    matching streamed media payloads to their persisted id.
   const idByFilename = new Map<string, string>()
-  for (const f of mediaFiles) {
-    const id = crypto.randomUUID()
-    idByFilename.set(f.filename, id)
-    const mime = mimeFor(f.filename)
-    media.push({ id, blob: new Blob([f.bytes as unknown as ArrayBuffer], { type: mime }), mime, filename: f.filename })
-  }
+  for (const filename of filenames) idByFilename.set(filename, crypto.randomUUID())
 
   // 2. Decks: one flat Deck per Anki deck that actually contains cards, full
   //    name kept verbatim. Anki collections always ship a built-in "Default"
@@ -108,5 +108,5 @@ export function buildImportResult(col: ParsedCollection, mediaFiles: MediaFile[]
     reviews.push({ id: crypto.randomUUID(), cardId, ...mapRevlog(r) })
   }
 
-  return { decks, notes, cards, media, reviews, warnings }
+  return { decks, notes, cards, idByFilename, reviews, warnings }
 }
