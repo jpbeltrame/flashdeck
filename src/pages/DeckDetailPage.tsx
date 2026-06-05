@@ -66,7 +66,9 @@ export default function DeckDetailPage() {
             <Card key={card.id} className="flex items-start gap-3">
               <div className="flex-1 space-y-1">
                 <div className="font-medium"><RenderedField text={note.fields.Front} format={note.format} /></div>
-                <div className="text-sm text-[var(--color-muted)]"><RenderedField text={note.fields.Back} format={note.format} /></div>
+                {note.format !== 'html' && (
+                  <div className="text-sm text-[var(--color-muted)]"><RenderedField text={note.fields.Back} format={note.format} /></div>
+                )}
               </div>
               <Button variant="ghost" onClick={() => setEditingId(note.id)}>Edit</Button>
               <Button variant="danger" onClick={() => deleteCard(card.id)}>Delete</Button>

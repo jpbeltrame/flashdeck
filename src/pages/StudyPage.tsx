@@ -8,6 +8,7 @@ import type { Rating } from '../domain/srs'
 import Button from '../ui/Button'
 import EmptyState from '../ui/EmptyState'
 import RenderedField from '../ui/RenderedField'
+import CardFrame from '../ui/CardFrame'
 
 const RATINGS: { label: string; rating: Rating; variant: 'ghost' | 'primary' }[] = [
   { label: 'Again', rating: 1, variant: 'ghost' },
@@ -70,15 +71,23 @@ export default function StudyPage() {
       </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center min-h-40 flex items-center justify-center">
-        <div className="text-lg">
-          {note && <RenderedField text={note.fields.Front} format={note.format} />}
-          {revealed && note && (
-            <>
-              <hr className="my-4 border-[var(--color-border)]" />
-              <div className="text-[var(--color-muted)]"><RenderedField text={note.fields.Back} format={note.format} /></div>
-            </>
-          )}
-        </div>
+        {note?.format === 'html' ? (
+          // Imported cards render faithfully (note-type CSS + JS) in a sandboxed
+          // iframe, using Anki's replace flow: front, then back on reveal.
+          <div className="w-full">
+            <CardFrame html={revealed ? note.fields.Back : note.fields.Front} css={note.css} />
+          </div>
+        ) : (
+          <div className="text-lg">
+            {note && <RenderedField text={note.fields.Front} format={note.format} />}
+            {revealed && note && (
+              <>
+                <hr className="my-4 border-[var(--color-border)]" />
+                <div className="text-[var(--color-muted)]"><RenderedField text={note.fields.Back} format={note.format} /></div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {revealed ? (
