@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import ThemeToggle from './ThemeToggle'
 
 const tabs = [
@@ -12,7 +12,10 @@ export default function AppShell() {
   return (
     <div className="flex flex-col h-full max-w-screen-sm mx-auto">
       <header className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
-        <span className="font-semibold">FlashDeck</span>
+        <Link to="/" className="flex items-center gap-2 font-semibold">
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="h-6 w-6" />
+          FlashDeck
+        </Link>
         <ThemeToggle />
       </header>
 

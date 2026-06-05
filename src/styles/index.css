@@ -23,6 +23,12 @@
   --color-muted: #7a869a;
 }
 
+/* Tailwind v4 resets buttons to the default cursor; restore the pointer for
+   interactive elements (disabled buttons keep the default cursor). */
+button:not(:disabled), a, [role="button"], label[for] {
+  cursor: pointer;
+}
+
 html, body, #root { height: 100%; }
 body {
   margin: 0;
