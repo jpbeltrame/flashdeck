@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildImportResult } from './import'
 import type { ParsedCollection } from './collection'
-import type { MediaFile } from './types'
 
 const models = {
   '1': { id: '1', name: 'Basic', type: 0 as const, flds: [{ name: 'Front', ord: 0 }, { name: 'Back', ord: 1 }],
@@ -28,22 +27,22 @@ function collection(over: Partial<ParsedCollection> = {}): ParsedCollection {
   }
 }
 
-const media: MediaFile[] = [{ filename: 'cat.jpg', bytes: new Uint8Array([1, 2, 3]) }]
+const filenames = ['cat.jpg']
 
 describe('buildImportResult', () => {
   it('creates one flat deck per Anki deck that has cards, with the full name', () => {
-    const r = buildImportResult(collection(), media)
+    const r = buildImportResult(collection(), filenames)
     const names = r.decks.map((d) => d.name).sort()
     expect(names).toEqual(['Spanish::Verbs'])
   })
 
   it('skips Anki decks that contain no cards (e.g. the built-in empty Default deck)', () => {
-    const r = buildImportResult(collection(), media)
+    const r = buildImportResult(collection(), filenames)
     expect(r.decks.some((d) => d.name === 'Default')).toBe(false)
   })
 
   it('imports notes as HTML with media rewritten to tokens', () => {
-    const r = buildImportResult(collection(), media)
+    const r = buildImportResult(collection(), filenames)
     const basic = r.notes.find((n) => n.type === 'basic')!
     expect(basic.format).toBe('html')
     expect(basic.fields.Front).toContain('[[media:')
@@ -52,14 +51,14 @@ describe('buildImportResult', () => {
   })
 
   it('maps a Cloze note to two cards (one per ordinal) on the same note', () => {
-    const r = buildImportResult(collection(), media)
+    const r = buildImportResult(collection(), filenames)
     const clozeNote = r.notes.find((n) => n.type === 'cloze')!
     const clozeCards = r.cards.filter((c) => c.noteId === clozeNote.id)
     expect(clozeCards.map((c) => c.templateIndex).sort()).toEqual([0, 1])
   })
 
   it('maps SRS state and links the review log to the right card', () => {
-    const r = buildImportResult(collection(), media)
+    const r = buildImportResult(collection(), filenames)
     const reviewCard = r.cards.find((c) => c.srs.status === 'review')!
     expect(reviewCard.srs.intervalDays).toBe(6)
     expect(r.reviews).toHaveLength(1)
@@ -67,23 +66,25 @@ describe('buildImportResult', () => {
     expect(r.reviews[0].rating).toBe(3)
   })
 
-  it('creates a media asset per referenced file with an inferred MIME', () => {
-    const r = buildImportResult(collection(), media)
-    expect(r.media).toHaveLength(1)
-    expect(r.media[0].mime).toBe('image/jpeg')
-    expect(r.media[0].filename).toBe('cat.jpg')
+  it('maps each filename to a stable id used by the rewritten note refs', () => {
+    const r = buildImportResult(collection(), filenames)
+    const id = r.idByFilename.get('cat.jpg')!
+    expect(id).toBeTruthy()
+    // The same id is what the note references, so media can be persisted separately.
+    const basic = r.notes.find((n) => n.type === 'basic')!
+    expect(basic.mediaRefs).toContain(id)
   })
 
   it('carries the note-type css onto imported notes', () => {
     const col = collection()
     col.models['1'].css = '.card { font-size: 20px; }'
-    const r = buildImportResult(col, media)
+    const r = buildImportResult(col, filenames)
     expect(r.notes.find((n) => n.type === 'basic')!.css).toBe('.card { font-size: 20px; }')
   })
 
   it('drops cards whose deck is missing and warns', () => {
     const c = collection({ cards: [{ id: 200, nid: 10, did: 999, ord: 0, type: 0, queue: 0, due: 0, ivl: 0, factor: 0, reps: 0, lapses: 0 }] })
-    const r = buildImportResult(c, media)
+    const r = buildImportResult(c, filenames)
     expect(r.cards).toHaveLength(0)
     expect(r.warnings.some((w) => /deck/i.test(w))).toBe(true)
   })

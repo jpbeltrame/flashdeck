@@ -1,4 +1,4 @@
-import type { Card, Deck, MediaAsset, Note, ReviewLog } from '../../db/schema'
+import type { Card, Deck, Note, ReviewLog } from '../../db/schema'
 
 /** A note-type template (one per generated Basic card; Cloze uses a single template). */
 export interface AnkiTemplate {
@@ -58,12 +58,13 @@ export interface MediaFile {
   bytes: Uint8Array
 }
 
-/** Everything to persist, produced purely (no DB writes here). */
+/** Everything to persist except media bytes (streamed separately), produced purely. */
 export interface ImportResult {
   decks: Deck[]
   notes: Note[]
   cards: Card[]
-  media: MediaAsset[]
+  /** filename → media id; the streamed media payloads are persisted under these ids. */
+  idByFilename: Map<string, string>
   reviews: ReviewLog[]
   warnings: string[]
 }

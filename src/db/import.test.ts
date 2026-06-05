@@ -29,19 +29,19 @@ async function sampleApkg(): Promise<Uint8Array> {
 }
 
 describe('persistImport', () => {
-  it('writes decks, notes, cards, media, and reviews in one transaction', async () => {
+  it('writes decks, notes, cards, and reviews in one transaction (media streamed separately)', async () => {
     const bytes = await sampleApkg()
     const { collection, media } = unzipApkg(bytes)
     const sqlDb = await openFromBytes(collection)
-    const result = buildImportResult(readCollection(sqlDb), media)
+    const result = buildImportResult(readCollection(sqlDb), media.map((m) => m.filename))
 
     await persistImport(result)
 
     expect(await db.decks.count()).toBe(1) // empty Default deck is skipped
     expect(await db.notes.count()).toBe(1)
     expect(await db.cards.count()).toBe(1)
-    expect(await db.media.count()).toBe(1)
     expect(await db.reviews.count()).toBe(1)
+    expect(await db.media.count()).toBe(0) // persistImport never touches media
   })
 })
 

@@ -20,6 +20,20 @@ globalThis.structuredClone = function patchedStructuredClone<T>(value: T, option
   return _nativeStructuredClone(value, options)
 }
 
+// jsdom's Blob/File lacks .stream(); real browsers (incl. iOS Safari) have it.
+// Polyfill a single-chunk stream so importApkg's streaming path can be tested.
+if (typeof Blob !== 'undefined' && typeof Blob.prototype.stream !== 'function') {
+  Blob.prototype.stream = function stream(this: Blob): ReadableStream<Uint8Array> {
+    const buffer = this.arrayBuffer() // capture the promise, not `this`
+    return new ReadableStream<Uint8Array>({
+      async start(controller) {
+        controller.enqueue(new Uint8Array(await buffer))
+        controller.close()
+      },
+    })
+  }
+}
+
 if (!window.matchMedia) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: false,
