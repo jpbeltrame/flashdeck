@@ -46,7 +46,12 @@ export default function DecksPage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-xl font-semibold">Decks</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Decks</h1>
+        <Link to="/import" className="text-sm text-[var(--color-accent)] font-medium">
+          Import .apkg
+        </Link>
+      </div>
 
       <div className="flex gap-2">
         <input
