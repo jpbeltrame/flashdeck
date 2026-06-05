@@ -39,9 +39,7 @@ describe('renderCard', () => {
   it('renders a Basic card front/back via the template', () => {
     const { front, back, warnings } = renderCard(basic, { Front: 'Q', Back: 'A' }, 0, map)
     expect(front).toBe('Q')
-    // {{FrontSide}} is dropped, not expanded — the study screen already shows the
-    // front, so the answer must not repeat it.
-    expect(back).toBe('<hr>A')
+    expect(back).toBe('Q<hr>A') // {{FrontSide}} expands to the front (Anki-faithful)
     expect(warnings).toEqual([])
   })
 
@@ -72,9 +70,10 @@ describe('renderCard', () => {
     expect(front).toBe('The <span class="cloze">[...]</span> is blue')
     expect(back).toBe('The <span class="cloze">sky</span> is blue')
   })
-  it('warns about card-side script', () => {
+  it('keeps card-side script (it runs sandboxed) and does not warn', () => {
     const m: AnkiModel = { ...basic, tmpls: [{ name: 'x', ord: 0, qfmt: '<script>x()</script>{{Front}}', afmt: '{{Back}}' }] }
-    const { warnings } = renderCard(m, { Front: 'Q', Back: 'A' }, 0, map)
-    expect(warnings.some((w) => /script/i.test(w))).toBe(true)
+    const { front, warnings } = renderCard(m, { Front: 'Q', Back: 'A' }, 0, map)
+    expect(front).toBe('<script>x()</script>Q')
+    expect(warnings).toEqual([])
   })
 })

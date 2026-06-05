@@ -122,6 +122,7 @@ export interface ModernNotetype {
   id: number
   name: string
   cloze?: boolean
+  css?: string
   fields: string[]
   templates: { name: string; qfmt: string; afmt: string }[]
 }
@@ -156,8 +157,10 @@ export async function buildModernCollection(opts: ModernFixtureOptions): Promise
   db.run("INSERT INTO col (id, crt, models, decks) VALUES (1, ?, '', '')", [opts.crt ?? 1_600_000_000])
 
   for (const nt of opts.notetypes) {
-    const ntConfig = nt.cloze ? encodeProto([{ num: 1, value: 1 }]) : encodeProto([])
-    db.run('INSERT INTO notetypes (id, name, config) VALUES (?, ?, ?)', [nt.id, nt.name, ntConfig])
+    const cfg: { num: number; value: number | string }[] = []
+    if (nt.cloze) cfg.push({ num: 1, value: 1 })
+    if (nt.css) cfg.push({ num: 3, value: nt.css })
+    db.run('INSERT INTO notetypes (id, name, config) VALUES (?, ?, ?)', [nt.id, nt.name, encodeProto(cfg)])
     nt.fields.forEach((name, ord) => {
       db.run('INSERT INTO fields (ntid, ord, name, config) VALUES (?, ?, ?, ?)', [nt.id, ord, name, encodeProto([])])
     })

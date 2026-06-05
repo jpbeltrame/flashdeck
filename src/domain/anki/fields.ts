@@ -69,10 +69,6 @@ export function renderCard(
     ? model.tmpls[0]
     : (model.tmpls.find((t) => t.ord === ord) ?? model.tmpls[0])
 
-  if (tmpl && /<script/i.test(tmpl.qfmt + tmpl.afmt)) {
-    warnings.push(`Note type "${model.name}" uses card-side script, which is not supported; rendered without it.`)
-  }
-
   const substitute = (template: string, side: 'front' | 'back'): string => {
     // Resolve conditional sections first so empty optional fields drop their markup.
     let out = evalSections(template ?? '', fields)
@@ -86,8 +82,6 @@ export function renderCard(
   }
 
   const front = substitute(tmpl?.qfmt ?? '', 'front')
-  // Drop {{FrontSide}} rather than expanding it — the study screen renders the
-  // front separately, so expanding here would duplicate the whole question.
-  const back = substitute(tmpl?.afmt ?? '', 'back').replace(/\{\{FrontSide\}\}/g, '')
+  const back = substitute(tmpl?.afmt ?? '', 'back').replace(/\{\{FrontSide\}\}/g, front)
   return { front, back, warnings }
 }

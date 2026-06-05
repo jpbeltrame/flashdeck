@@ -54,4 +54,19 @@ describe('StudyPage', () => {
     renderStudy()
     expect(await screen.findByRole('img')).toHaveAttribute('src', 'blob:mock')
   })
+
+  it('renders an imported html note inside a sandboxed iframe', async () => {
+    const noteId = crypto.randomUUID()
+    await db.notes.add({
+      id: noteId, deckId: 'd1', type: 'basic', format: 'html',
+      css: '.card{color:#333}', fields: { Front: '<b>Q</b>', Back: '<b>Q</b><hr>A' }, mediaRefs: [],
+    })
+    await db.cards.add({
+      id: crypto.randomUUID(), noteId, deckId: 'd1', templateIndex: 0,
+      srs: { status: 'new', ease: 2.5, intervalDays: 0, dueDate: 0, reps: 0, lapses: 0 },
+    })
+    renderStudy()
+    const frame = await screen.findByTitle('card') as HTMLIFrameElement
+    expect(frame.getAttribute('sandbox')).toBe('allow-scripts')
+  })
 })

@@ -24,3 +24,8 @@ import as flat decks keeping the full name verbatim. Rebuilding parent/child
 `Deck.parentId` nesting (and the UI to show it) is deferred to a later phase.
 Modern Anki schema (v18+, incl. zstd `collection.anki21b`) note types and decks
 ARE read (see `2026-06-04-flashdeck-modern-anki-schema.md`).
+
+**Card-side JavaScript** in imported note types (e.g. MCQ) IS supported: cards
+render in a sandboxed `<iframe sandbox="allow-scripts">` with the note-type CSS
+(see `2026-06-04-flashdeck-faithful-card-rendering.md`). In-card answer buttons
+are visual only — grading still uses FlashDeck's rating buttons.

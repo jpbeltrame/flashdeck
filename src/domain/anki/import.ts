@@ -89,6 +89,7 @@ export function buildImportResult(col: ParsedCollection, mediaFiles: MediaFile[]
     const fieldText = `${display!.front}\n${display!.back}`
     notes.push({
       id: noteId, deckId: firstDeck, type: model.type === 1 ? 'cloze' : 'basic', format: 'html',
+      css: model.css,
       fields: { Front: display!.front, Back: display!.back },
       mediaRefs: mediaIdsIn(fieldText),
     })

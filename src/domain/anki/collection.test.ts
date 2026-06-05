@@ -66,6 +66,18 @@ describe('readCollection (modern schema v18)', () => {
     expect(col.notes).toEqual([{ id: 10, mid: '1', flds: 'Q\x1fA' }])
   })
 
+  it('reads the note-type css from the v18 notetype config', async () => {
+    const db = await buildModernCollection({
+      crt: 1_600_000_000,
+      notetypes: [{ id: 1, name: 'Styled', css: '.card { color: red; }', fields: ['Front', 'Back'],
+        templates: [{ name: 'C', qfmt: '{{Front}}', afmt: '{{Back}}' }] }],
+      decks: [{ id: 1, name: 'Default' }],
+      notes: [{ id: 10, mid: 1, flds: 'Q\x1fA' }],
+      cards: [{ id: 100, nid: 10, did: 1, ord: 0, type: 0 }],
+    })
+    expect(readCollection(db).models['1'].css).toBe('.card { color: red; }')
+  })
+
   it('still throws the clear error when neither layout has note types but notes exist', async () => {
     const db = await buildCollection({ models: {}, decks: {}, notes: [{ id: 1, mid: '1', flds: 'x' }], cards: [] })
     expect(() => readCollection(db)).toThrow(/newer Anki version/i)
