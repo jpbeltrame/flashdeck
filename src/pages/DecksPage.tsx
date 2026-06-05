@@ -1,7 +1,6 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { listDecks, createDeck, renameDeck, deleteDeck } from '../db/decks'
+import { listDecks, renameDeck, deleteDeck } from '../db/decks'
 import { db } from '../db/db'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
@@ -26,14 +25,6 @@ function useDeckCounts() {
 
 export default function DecksPage() {
   const rows = useDeckCounts()
-  const [name, setName] = useState('')
-
-  async function add() {
-    const trimmed = name.trim()
-    if (!trimmed) return
-    await createDeck(trimmed)
-    setName('')
-  }
 
   async function rename(id: string, current: string) {
     const next = window.prompt('Rename deck', current)
@@ -48,24 +39,20 @@ export default function DecksPage() {
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Decks</h1>
-        <Link to="/import" className="text-sm text-[var(--color-accent)] font-medium">
-          Import .apkg
+        <Link to="/new" className="text-sm text-[var(--color-accent)] font-medium">
+          + New deck
         </Link>
       </div>
 
-      <div className="flex gap-2">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add()}
-          placeholder="New deck name"
-          className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-        />
-        <Button onClick={add}>Add deck</Button>
-      </div>
-
       {rows && rows.length === 0 && (
-        <EmptyState title="No decks yet." hint="Create your first deck above." />
+        <EmptyState
+          title="No decks yet."
+          hint={
+            <>
+              Tap <Link to="/new" className="text-[var(--color-accent)] font-medium">+ New deck</Link> to create or import one.
+            </>
+          }
+        />
       )}
 
       <div className="space-y-3">

@@ -1,9 +1,9 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { db } from '../db/db'
+import { createDeck } from '../db/decks'
 import DecksPage from './DecksPage'
 
 beforeEach(async () => {
@@ -20,12 +20,16 @@ function renderPage() {
 }
 
 describe('DecksPage', () => {
-  it('creates a deck and shows it in the list', async () => {
-    const user = userEvent.setup()
+  it('lists existing decks', async () => {
+    await createDeck('Biology')
     renderPage()
-    await user.type(screen.getByPlaceholderText(/new deck name/i), 'Biology')
-    await user.click(screen.getByRole('button', { name: /add deck/i }))
     expect(await screen.findByText('Biology')).toBeInTheDocument()
+  })
+
+  it('links to the create-deck page', async () => {
+    renderPage()
+    const link = await screen.findByRole('link', { name: /new deck/i })
+    expect(link).toHaveAttribute('href', '/new')
   })
 
   it('shows the empty state when there are no decks', async () => {

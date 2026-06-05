@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import AppShell from './ui/AppShell'
 import DecksPage from './pages/DecksPage'
+import CreateDeckPage from './pages/CreateDeckPage'
 import DeckDetailPage from './pages/DeckDetailPage'
 import StudyPage from './pages/StudyPage'
 import StatsPage from './pages/StatsPage'
@@ -14,6 +15,7 @@ export default function App() {
     <Routes>
       <Route element={<AppShell />}>
         <Route index element={<DecksPage />} />
+        <Route path="new" element={<CreateDeckPage />} />
         <Route path="deck/:id" element={<DeckDetailPage />} />
         <Route path="study" element={<StudyPage />} />
         <Route path="stats" element={<StatsPage />} />
