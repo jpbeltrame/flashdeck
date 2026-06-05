@@ -31,10 +31,15 @@ function collection(over: Partial<ParsedCollection> = {}): ParsedCollection {
 const media: MediaFile[] = [{ filename: 'cat.jpg', bytes: new Uint8Array([1, 2, 3]) }]
 
 describe('buildImportResult', () => {
-  it('creates one flat deck per Anki deck with the full name', () => {
+  it('creates one flat deck per Anki deck that has cards, with the full name', () => {
     const r = buildImportResult(collection(), media)
     const names = r.decks.map((d) => d.name).sort()
-    expect(names).toEqual(['Default', 'Spanish::Verbs'])
+    expect(names).toEqual(['Spanish::Verbs'])
+  })
+
+  it('skips Anki decks that contain no cards (e.g. the built-in empty Default deck)', () => {
+    const r = buildImportResult(collection(), media)
+    expect(r.decks.some((d) => d.name === 'Default')).toBe(false)
   })
 
   it('imports notes as HTML with media rewritten to tokens', () => {

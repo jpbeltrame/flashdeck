@@ -14,10 +14,31 @@ async function blobToDataUrl(blob: Blob): Promise<string> {
   return `data:${blob.type || 'application/octet-stream'};base64,${btoa(binary)}`
 }
 
-export default function CardFrame({ html, css }: { html: string; css?: string }) {
+export default function CardFrame({
+  html,
+  css,
+  seedKey,
+}: {
+  html: string
+  css?: string
+  /**
+   * Identifies the card. While it stays the same (question → answer of one
+   * card) the Persistence store is preserved so the answer side reads what the
+   * question side wrote; when it changes (next card) the store is cleared.
+   */
+  seedKey?: string
+}) {
   const [doc, setDoc] = useState('')
   const [height, setHeight] = useState(160)
   const frameRef = useRef<HTMLIFrameElement>(null)
+  // Persistence store written by the in-frame MCQ JS, carried question→answer.
+  const persistence = useRef<Record<string, string>>({})
+  const persistenceKey = useRef(seedKey)
+
+  if (persistenceKey.current !== seedKey) {
+    persistenceKey.current = seedKey
+    persistence.current = {}
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -32,20 +53,20 @@ export default function CardFrame({ html, css }: { html: string; css?: string })
       }
       if (cancelled) return
       const dark = document.documentElement.classList.contains('dark')
-      setDoc(buildCardDoc({ html, css, dark, media }))
+      setDoc(buildCardDoc({ html, css, dark, media, persistence: persistence.current }))
     })()
     return () => { cancelled = true }
   }, [html, css])
 
   useEffect(() => {
     function onMessage(e: MessageEvent) {
-      if (
-        frameRef.current &&
-        e.source === frameRef.current.contentWindow &&
-        (e.data as { type?: string })?.type === 'flashdeck-card-height'
-      ) {
-        const h = Number((e.data as { height?: number }).height)
+      if (!frameRef.current || e.source !== frameRef.current.contentWindow) return
+      const data = e.data as { type?: string; height?: number; store?: unknown }
+      if (data?.type === 'flashdeck-card-height') {
+        const h = Number(data.height)
         if (Number.isFinite(h)) setHeight(Math.max(80, h))
+      } else if (data?.type === 'flashdeck-persistence' && data.store && typeof data.store === 'object') {
+        persistence.current = data.store as Record<string, string>
       }
     }
     window.addEventListener('message', onMessage)

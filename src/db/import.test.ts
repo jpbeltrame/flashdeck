@@ -37,7 +37,7 @@ describe('persistImport', () => {
 
     await persistImport(result)
 
-    expect(await db.decks.count()).toBe(2)
+    expect(await db.decks.count()).toBe(1) // empty Default deck is skipped
     expect(await db.notes.count()).toBe(1)
     expect(await db.cards.count()).toBe(1)
     expect(await db.media.count()).toBe(1)
@@ -69,12 +69,12 @@ describe('importApkg (modern schema v18, end-to-end)', () => {
     const file = new File([zipApkg(cdb)], 'modern.apkg')
 
     const summary = await importApkg(file, { openDb: openFromBytes })
-    expect(summary.decks).toBe(2)
+    expect(summary.decks).toBe(1) // empty Default deck is skipped
     expect(summary.notes).toBe(2)
     expect(summary.cards).toBe(3) // 1 basic + 2 cloze ordinals
 
     const decks = await db.decks.toArray()
-    expect(decks.map((d) => d.name).sort()).toEqual(['Default', 'Spanish::Verbs'])
+    expect(decks.map((d) => d.name).sort()).toEqual(['Spanish::Verbs'])
     const cloze = (await db.notes.toArray()).find((n) => n.type === 'cloze')!
     expect(cloze.format).toBe('html')
     expect(cloze.fields.Front).toContain('cloze')
@@ -115,7 +115,7 @@ describe('importApkg (end-to-end with injected node loader)', () => {
   it('imports a built .apkg into IndexedDB', async () => {
     const file = new File([await sampleApkg()], 'sample.apkg')
     const summary = await importApkg(file, { openDb: openFromBytes })
-    expect(summary.decks).toBe(2)
+    expect(summary.decks).toBe(1) // empty Default deck is skipped
     expect(summary.notes).toBe(1)
     expect(summary.cards).toBe(1)
     expect(summary.media).toBe(1)

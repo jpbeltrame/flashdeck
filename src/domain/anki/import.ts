@@ -29,10 +29,15 @@ export function buildImportResult(col: ParsedCollection, mediaFiles: MediaFile[]
     media.push({ id, blob: new Blob([f.bytes as unknown as ArrayBuffer], { type: mime }), mime, filename: f.filename })
   }
 
-  // 2. Decks: one flat Deck per Anki deck, full name kept verbatim.
+  // 2. Decks: one flat Deck per Anki deck that actually contains cards, full
+  //    name kept verbatim. Anki collections always ship a built-in "Default"
+  //    deck (and may carry other empty decks); importing those would create
+  //    stray empty decks, so only emit decks referenced by a card.
+  const usedDeckIds = new Set(col.cards.map((c) => String(c.did)))
   const deckIdByAnki = new Map<string, string>()
   const decks: Deck[] = []
   for (const [ankiId, d] of Object.entries(col.decks)) {
+    if (!usedDeckIds.has(ankiId)) continue
     const id = crypto.randomUUID()
     deckIdByAnki.set(ankiId, id)
     decks.push({ id, name: d.name, createdAt: now, updatedAt: now })

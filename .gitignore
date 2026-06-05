@@ -28,3 +28,6 @@ dist-ssr
 
 # Vite PWA
 dev-dist/
+
+# Local Anki sample decks
+apkg_samples/

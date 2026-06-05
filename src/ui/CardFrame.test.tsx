@@ -20,6 +20,37 @@ describe('CardFrame', () => {
     expect(frame.getAttribute('srcdoc')).toContain('<p>hi</p>')
   })
 
+  it('seeds the next side with Persistence values written by the previous side', async () => {
+    const { rerender } = render(<CardFrame html="<div>front</div>" seedKey="card1" />)
+    const frame = await screen.findByTitle('card') as HTMLIFrameElement
+    await waitFor(() => expect(frame.getAttribute('srcdoc')).toContain('front'))
+
+    // The question side wrote a shuffled option order via Persistence.
+    window.dispatchEvent(new MessageEvent('message', {
+      source: frame.contentWindow as Window,
+      data: { type: 'flashdeck-persistence', store: { order: '[2,0,1]' } },
+    }))
+
+    // Reveal the answer side of the SAME card.
+    rerender(<CardFrame html="<div>back</div>" seedKey="card1" />)
+    await waitFor(() => expect(frame.getAttribute('srcdoc')).toContain('back'))
+    expect(frame.getAttribute('srcdoc')).toContain('[2,0,1]')
+  })
+
+  it('clears Persistence when a different card is shown', async () => {
+    const { rerender } = render(<CardFrame html="<div>front</div>" seedKey="card1" />)
+    const frame = await screen.findByTitle('card') as HTMLIFrameElement
+    await waitFor(() => expect(frame.getAttribute('srcdoc')).toContain('front'))
+    window.dispatchEvent(new MessageEvent('message', {
+      source: frame.contentWindow as Window,
+      data: { type: 'flashdeck-persistence', store: { order: '[2,0,1]' } },
+    }))
+
+    rerender(<CardFrame html="<div>next</div>" seedKey="card2" />)
+    await waitFor(() => expect(frame.getAttribute('srcdoc')).toContain('next'))
+    expect(frame.getAttribute('srcdoc')).not.toContain('[2,0,1]')
+  })
+
   it('inlines referenced media as a data url', async () => {
     const asset = await addMedia(new Blob(['x'], { type: 'image/png' }), 'p.png', 'image/png')
     render(<CardFrame html={`<img src="${mediaToken(asset.id)}">`} />)

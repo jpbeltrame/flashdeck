@@ -75,7 +75,7 @@ export default function StudyPage() {
           // Imported cards render faithfully (note-type CSS + JS) in a sandboxed
           // iframe, using Anki's replace flow: front, then back on reveal.
           <div className="w-full">
-            <CardFrame html={revealed ? note.fields.Back : note.fields.Front} css={note.css} />
+            <CardFrame html={revealed ? note.fields.Back : note.fields.Front} css={note.css} seedKey={current.id} />
           </div>
         ) : (
           <div className="text-lg">
