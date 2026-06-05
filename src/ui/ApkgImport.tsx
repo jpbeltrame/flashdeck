@@ -32,7 +32,9 @@ export default function ApkgImport({ openDb }: ApkgImportProps) {
         <input
           aria-label="Choose .apkg file"
           type="file"
-          accept=".apkg,application/zip"
+          // No `accept` filter: Safari iOS greys out files whose extension it
+          // doesn't recognize (`.apkg` has no registered UTI), making them
+          // un-selectable. importApkg() validates contents on parse instead.
           disabled={busy}
           className="block text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--color-accent)] file:px-3 file:py-2 file:text-white"
           onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = '' }}
