@@ -68,9 +68,10 @@ export default function AppShell() {
         <Outlet />
       </main>
 
-      {/* Floating pill nav: lifted clear of the iOS home-indicator gesture zone
-          via the safe-area inset, so swipes don't collide with the tabs. */}
-      <nav className="px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      {/* Floating pill nav: lifted clear of the iOS home-indicator gesture
+          zone. The pill floats, so it needs only part of the safe-area inset
+          as clearance — subtract some back out to avoid an oversized gap. */}
+      <nav className="px-4 pt-2 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.9rem))]">
         <div className="mx-auto flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-lg shadow-black/5">
           {tabs.map(({ to, label, end, Icon }) => (
             <NavLink
