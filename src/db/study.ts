@@ -7,11 +7,7 @@ async function cardsForScope(scope: string): Promise<Card[]> {
   return db.cards.where('deckId').equals(scope).toArray()
 }
 
-export async function getDueCards(
-  scope: string,
-  now: number = Date.now(),
-  limit = 100,
-): Promise<Card[]> {
+export async function getDueCards(scope: string, now: number = Date.now()): Promise<Card[]> {
   const cards = await cardsForScope(scope)
   const due = cards.filter((c) => c.srs.dueDate <= now)
   // New cards last; otherwise soonest-due first.
@@ -21,7 +17,7 @@ export async function getDueCards(
     if (aNew !== bNew) return aNew - bNew
     return a.srs.dueDate - b.srs.dueDate
   })
-  return due.slice(0, limit)
+  return due
 }
 
 export async function countDue(scope: string, now: number = Date.now()): Promise<number> {
@@ -44,6 +40,7 @@ export async function applyReview(
       cardId,
       ts: now,
       rating,
+      statusBefore: card.srs.status,
       intervalBefore: card.srs.intervalDays,
       intervalAfter: after.intervalDays,
       ease: after.ease,
