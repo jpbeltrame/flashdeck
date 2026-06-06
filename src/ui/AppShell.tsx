@@ -1,7 +1,6 @@
 import type { ComponentType, SVGProps } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import ThemeToggle from './ThemeToggle'
-import ViewportDebug from './ViewportDebug'
 
 type IconProps = SVGProps<SVGSVGElement>
 
@@ -53,8 +52,7 @@ const tabs: { to: string; label: string; end: boolean; Icon: ComponentType<IconP
 
 export default function AppShell() {
   return (
-    <div data-shell className="flex flex-col h-[var(--app-height,100dvh)] max-w-screen-sm mx-auto">
-      <ViewportDebug />
+    <div className="flex flex-col h-[var(--app-height,100dvh)] max-w-screen-sm mx-auto">
       {/* Top inset clears the translucent iOS status bar in standalone PWA
           mode (black-translucent + viewport-fit=cover), mirroring the nav's
           bottom inset; falls back to the normal 0.75rem padding in-browser. */}
