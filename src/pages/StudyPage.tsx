@@ -20,7 +20,6 @@ const RATINGS: { label: string; rating: Rating; variant: 'ghost' | 'primary' }[]
 export default function StudyPage() {
   const [params] = useSearchParams()
   const scope = params.get('deck') ?? 'all'
-
   const [queue, setQueue] = useState<Card[] | null>(null)
   const [index, setIndex] = useState(0)
   const [revealed, setRevealed] = useState(false)
@@ -29,7 +28,7 @@ export default function StudyPage() {
   // Load the queue once at session start (snapshot, so re-scheduled cards don't reappear).
   useEffect(() => {
     let active = true
-    getDueCards(scope, Date.now(), 200).then((cards) => {
+    getDueCards(scope, Date.now()).then((cards) => {
       if (active) setQueue(cards)
     })
     return () => { active = false }
