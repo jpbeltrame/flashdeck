@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { db } from '../db/db'
 import { listCardsByDeck, createTextCard, updateTextCard, deleteCard } from '../db/cards'
+import { countDeckSessionsCompletedToday } from '../db/sessions'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
 import EmptyState from '../ui/EmptyState'
@@ -15,6 +16,7 @@ export default function DeckDetailPage() {
   const { id = '' } = useParams()
   const deck = useLiveQuery(() => db.decks.get(id), [id])
   const rows = useLiveQuery(() => listCardsByDeck(id), [id])
+  const doneToday = useLiveQuery(() => countDeckSessionsCompletedToday(id), [id])
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -32,6 +34,11 @@ export default function DeckDetailPage() {
         <div>
           <Link to="/" className="text-xs text-[var(--color-muted)]">← Decks</Link>
           <h1 className="text-xl font-semibold">{deck?.name ?? 'Deck'}</h1>
+          {doneToday ? (
+            <p className="text-xs text-[var(--color-muted)]">
+              {doneToday} session{doneToday === 1 ? '' : 's'} completed today
+            </p>
+          ) : null}
         </div>
         <Link to={`/study?deck=${id}`}>
           <Button>Study</Button>
