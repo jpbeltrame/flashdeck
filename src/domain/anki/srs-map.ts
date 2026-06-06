@@ -28,9 +28,14 @@ export function mapCardSrs(c: AnkiCardRow, crtSec: number, now: number): Card['s
 /** Map a revlog row to a ReviewLog without id/cardId (the importer assigns those). */
 export function mapRevlog(r: AnkiRevlogRow): Omit<ReviewLog, 'id' | 'cardId'> {
   const rating = Math.min(4, Math.max(1, r.ease)) as ReviewLog['rating']
+  // Best-effort prior status from the previous interval: 0 = first introduction,
+  // negative = learning step (sub-day), positive = a graduated review.
+  const statusBefore: ReviewLog['statusBefore'] =
+    r.lastIvl === 0 ? 'new' : r.lastIvl < 0 ? 'learning' : 'review'
   return {
     ts: r.id,
     rating,
+    statusBefore,
     intervalBefore: intervalDays(r.lastIvl),
     intervalAfter: intervalDays(r.ivl),
     ease: r.factor > 0 ? r.factor / 1000 : 2.5,
