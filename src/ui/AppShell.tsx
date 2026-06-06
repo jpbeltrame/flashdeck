@@ -52,7 +52,7 @@ const tabs: { to: string; label: string; end: boolean; Icon: ComponentType<IconP
 
 export default function AppShell() {
   return (
-    <div className="flex flex-col h-full max-w-screen-sm mx-auto">
+    <div className="flex flex-col h-dvh max-w-screen-sm mx-auto">
       {/* Top inset clears the translucent iOS status bar in standalone PWA
           mode (black-translucent + viewport-fit=cover), mirroring the nav's
           bottom inset; falls back to the normal 0.75rem padding in-browser. */}
@@ -69,9 +69,9 @@ export default function AppShell() {
       </main>
 
       {/* Floating pill nav: lifted clear of the iOS home-indicator gesture
-          zone. The pill floats, so it needs only part of the safe-area inset
-          as clearance — subtract some back out to avoid an oversized gap. */}
-      <nav className="px-4 pt-2 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.9rem))]">
+          zone via the safe-area inset. The container is h-dvh (full viewport),
+          so this inset is applied exactly once here. */}
+      <nav className="px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-lg shadow-black/5">
           {tabs.map(({ to, label, end, Icon }) => (
             <NavLink
