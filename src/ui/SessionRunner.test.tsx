@@ -1,7 +1,7 @@
 // src/ui/SessionRunner.test.tsx
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { db } from '../db/db'
@@ -34,6 +34,25 @@ describe('SessionRunner', () => {
     await user.click(screen.getByRole('button', { name: /good/i }))
 
     expect(await screen.findByText(/session complete/i)).toBeInTheDocument()
+    expect(await db.reviews.count()).toBe(1)
+  })
+
+  it('ignores a rapid second rating click on the same card', async () => {
+    const user = userEvent.setup()
+    await createTextCard({ deckId: 'd1', front: 'Q1', back: 'A1' })
+    await createTextCard({ deckId: 'd1', front: 'Q2', back: 'A2' })
+    renderRunner('d1')
+
+    expect(await screen.findByText(/^1 \/ 2$/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /show answer/i }))
+
+    // Two synchronous clicks before the first advance re-renders the queue.
+    const good = screen.getByRole('button', { name: /good/i })
+    fireEvent.click(good)
+    fireEvent.click(good)
+
+    // Only the first rating is applied: one review, advanced by exactly one step.
+    await waitFor(() => expect(screen.getByText(/^2 \/ 2$/)).toBeInTheDocument())
     expect(await db.reviews.count()).toBe(1)
   })
 

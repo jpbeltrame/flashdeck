@@ -31,6 +31,7 @@ export default function SessionRunner({ deckId }: { deckId: string }) {
   const [conflict, setConflict] = useState<StudySession | null>(null)
   const [revealed, setRevealed] = useState(false)
   const initFor = useRef<string | null>(null)
+  const isRating = useRef(false)
 
   useEffect(() => {
     if (initFor.current === deckId) return
@@ -90,10 +91,17 @@ export default function SessionRunner({ deckId }: { deckId: string }) {
           <Button
             variant="ghost"
             onClick={async () => {
-              await abandonSession(conflict.id)
-              const started = await startSession(deckId, { length: sessionLength, newRatio })
-              setConflict(null)
-              setSession(started)
+              try {
+                await abandonSession(conflict.id)
+                const started = await startSession(deckId, { length: sessionLength, newRatio })
+                setConflict(null)
+                setSession(started)
+              } catch {
+                // Lost a race after abandoning: recover by adopting the live state.
+                const now = await getActiveSession()
+                setConflict(now && now.deckId !== deckId ? now : null)
+                if (now && now.deckId === deckId) setSession(now)
+              }
             }}
           >
             Discard &amp; start here
@@ -119,11 +127,16 @@ export default function SessionRunner({ deckId }: { deckId: string }) {
   }
 
   async function rate(rating: Rating) {
-    if (!session || !cardId) return
-    await applyReview(cardId, rating)
-    const updated = await advanceSession(session.id)
-    setRevealed(false)
-    setSession(updated)
+    if (!session || !cardId || isRating.current) return
+    isRating.current = true
+    try {
+      await applyReview(cardId, rating)
+      const updated = await advanceSession(session.id)
+      setRevealed(false)
+      setSession(updated)
+    } finally {
+      isRating.current = false
+    }
   }
 
   return (
