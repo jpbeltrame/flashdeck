@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type {
-  Deck, Note, Card, MediaAsset, ReviewLog, Schedule,
+  Deck, Note, Card, MediaAsset, ReviewLog, Schedule, StudySession,
 } from './schema'
 
 export class FlashDeckDB extends Dexie {
@@ -10,6 +10,7 @@ export class FlashDeckDB extends Dexie {
   media!: EntityTable<MediaAsset, 'id'>
   reviews!: EntityTable<ReviewLog, 'id'>
   schedules!: EntityTable<Schedule, 'id'>
+  sessions!: EntityTable<StudySession, 'id'>
 
   constructor() {
     super('flashdeck')
@@ -20,6 +21,9 @@ export class FlashDeckDB extends Dexie {
       media: 'id, filename',
       reviews: 'id, cardId, ts',
       schedules: 'id, scope',
+    })
+    this.version(2).stores({
+      sessions: 'id, deckId, status, completedAt',
     })
   }
 }

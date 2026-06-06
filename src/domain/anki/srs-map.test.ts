@@ -44,10 +44,17 @@ describe('mapRevlog', () => {
   it('maps ease→rating and intervals', () => {
     const row: AnkiRevlogRow = { id: 1_600_500_000_000, cid: 1, ease: 3, ivl: 6, lastIvl: 1, factor: 2500 }
     expect(mapRevlog(row)).toEqual({
-      ts: 1_600_500_000_000, rating: 3, intervalBefore: 1, intervalAfter: 6, ease: 2.5,
+      ts: 1_600_500_000_000, rating: 3, statusBefore: 'review',
+      intervalBefore: 1, intervalAfter: 6, ease: 2.5,
     })
   })
   it('clamps an out-of-range ease into 1..4', () => {
     expect(mapRevlog({ id: 1, cid: 1, ease: 9, ivl: 1, lastIvl: 0, factor: 0 }).rating).toBe(4)
+  })
+  it('derives statusBefore from lastIvl (0=new, <0=learning, >0=review)', () => {
+    const base = { id: 1, cid: 1, ease: 3, ivl: 1, factor: 2500 }
+    expect(mapRevlog({ ...base, lastIvl: 0 }).statusBefore).toBe('new')
+    expect(mapRevlog({ ...base, lastIvl: -60 }).statusBefore).toBe('learning')
+    expect(mapRevlog({ ...base, lastIvl: 5 }).statusBefore).toBe('review')
   })
 })

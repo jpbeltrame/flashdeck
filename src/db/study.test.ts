@@ -26,16 +26,26 @@ describe('study queue', () => {
 
   it('excludes cards scheduled into the future after a review', async () => {
     const { card } = await createTextCard({ deckId: 'd1', front: 'Q', back: 'A' })
-    await applyReview(card.id, 3, NOW) // Good → 1 day out
+    await applyReview(card.id, 3, NOW)
     expect(await countDue('d1', NOW)).toBe(0)
     expect(await countDue('d1', NOW + 2 * 86_400_000)).toBe(1)
   })
 
-  it('respects the limit', async () => {
-    await createTextCard({ deckId: 'd1', front: 'A', back: 'A' })
-    await createTextCard({ deckId: 'd1', front: 'B', back: 'B' })
-    await createTextCard({ deckId: 'd1', front: 'C', back: 'C' })
-    expect(await getDueCards('d1', NOW, 2)).toHaveLength(2)
+  it('returns due cards with review cards before new cards', async () => {
+    const a = await createTextCard({ deckId: 'd1', front: 'A', back: 'A' })
+    await createTextCard({ deckId: 'd1', front: 'B', back: 'B' }) // stays new
+    await applyReview(a.card.id, 1, NOW - 86_400_000) // Again → relearning, due ~now
+    const due = await getDueCards('d1', NOW)
+    expect(due).toHaveLength(2)
+    expect(due[0].srs.status).not.toBe('new')
+    expect(due[1].srs.status).toBe('new')
+  })
+})
+
+describe('countNewCardsToday removed', () => {
+  it('is no longer part of the study module', async () => {
+    const mod = await import('./study')
+    expect('countNewCardsToday' in mod).toBe(false)
   })
 })
 
@@ -47,7 +57,7 @@ describe('applyReview', () => {
     expect(updated.srs.reps).toBe(1)
     const logs = await db.reviews.toArray()
     expect(logs).toHaveLength(1)
-    expect(logs[0]).toMatchObject({ cardId: card.id, rating: 3, ts: NOW })
+    expect(logs[0]).toMatchObject({ cardId: card.id, rating: 3, ts: NOW, statusBefore: 'new' })
   })
 
   it('throws for an unknown card', async () => {
