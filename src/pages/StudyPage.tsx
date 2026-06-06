@@ -70,7 +70,16 @@ export default function StudyPage() {
         {index + 1} / {queue.length}
       </div>
 
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center min-h-40 flex items-center justify-center">
+      <div
+        className={
+          note?.format === 'html'
+            ? // HTML cards bring their own note-type CSS (padding + background),
+              // so the container only supplies the rounded frame — no extra
+              // padding to double up with the card's own and waste width.
+              'rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden min-h-40 flex items-center justify-center'
+            : 'rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center min-h-40 flex items-center justify-center'
+        }
+      >
         {note?.format === 'html' ? (
           // Imported cards render faithfully (note-type CSS + JS) in a sandboxed
           // iframe, using Anki's replace flow: front, then back on reveal.
