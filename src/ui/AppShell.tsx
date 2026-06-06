@@ -53,7 +53,10 @@ const tabs: { to: string; label: string; end: boolean; Icon: ComponentType<IconP
 export default function AppShell() {
   return (
     <div className="flex flex-col h-full max-w-screen-sm mx-auto">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
+      {/* Top inset clears the translucent iOS status bar in standalone PWA
+          mode (black-translucent + viewport-fit=cover), mirroring the nav's
+          bottom inset; falls back to the normal 0.75rem padding in-browser. */}
+      <header className="flex items-center justify-between px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] border-b border-[var(--color-border)]">
         <Link to="/" className="flex items-center gap-2 font-semibold">
           <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="h-6 w-6" />
           FlashDeck
